@@ -1,0 +1,105 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Part_sys2 : MonoBehaviour {
+
+    ParticleSystem ps;
+    ParticleSystem.Particle[] particles;
+    private int arraySize = 3;
+    public Transform gameobj;
+
+    int totalParticles;
+
+    private void Awake()
+    {
+        ps = GetComponent<ParticleSystem>();
+
+        // cache particles
+        totalParticles = arraySize * arraySize * arraySize;
+        particles = new ParticleSystem.Particle[totalParticles];
+
+        InitiateParticles();
+    }
+
+
+    public void InitiateParticles()
+    {
+        int i = 0;
+        for (int z = 0; z < arraySize; z++)
+        {
+            for (int y = 0; y < arraySize; y++)
+            {
+                for (int x = 0; x < arraySize; x++)
+                {
+                    // set positions/rotations in grid
+                    particles[i].startColor = Color.white;
+                    particles[i].position = new Vector3(x - (arraySize - 1) * 0.5f, y - (arraySize - 1) * 0.5f, z - (arraySize - 1) * 0.5f);
+                    particles[i].startSize3D = new Vector3(0.5f, 0.5f, 0.5f);
+                    particles[i].rotation3D = Quaternion.identity.eulerAngles; // rotation.eulerAngles;
+                    i++;
+                }
+            }
+        }
+        RefreshParticles();
+    }
+
+
+   
+
+
+
+
+    void RefreshParticles()
+    {
+        // Apply the particle changes to the particle system
+        ps.SetParticles(particles, totalParticles);
+    }
+
+    public void Divergence_out(Transform target, bool invert)
+    {
+        if (target == null) return;
+
+        int i = 0;
+        for (int z = 0; z < arraySize; z++)
+        {
+            for (int y = 0; y < arraySize; y++)
+            {
+                for (int x = 0; x < arraySize; x++)
+                {
+                    var ppos = new Vector3(x - (arraySize - 1) * 0.5f, y - (arraySize - 1) * 0.5f, z - (arraySize - 1) * 0.5f);//fixing the whole array centered at (0,0,0)
+
+                    Vector3 relativePos = target.position - ppos;
+
+                    if (relativePos.magnitude > Mathf.Epsilon)
+                    {
+                        if (invert == true)
+                        {
+                            relativePos = ppos - target.position;
+                        }
+                        Quaternion rotation = Quaternion.LookRotation(relativePos);
+                        particles[i].rotation3D = rotation.eulerAngles;
+                    }
+                    else // hide, if too close
+                    {
+                        particles[i].startSize3D = Vector3.zero;
+                    }
+
+                    i++;
+                }
+            }
+        }
+        RefreshParticles();
+    }
+
+
+    void Start()
+    {
+        Divergence_out(gameobj, true);
+    }
+
+    //var ppos = new Vector3(x - (arraySize - 1), y - (arraySize - 1), z - (arraySize - 1));
+
+
+
+}
